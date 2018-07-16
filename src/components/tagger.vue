@@ -25,15 +25,7 @@
       <p>육하원칙으로 문장 나누기acn</p>
       <hr>
 
-      <div class="examples row">
-        <span v-for="(comments, index) in sentenceArrs">
-          <div class="btn-ex" v-on:click="text_load(comments)">
-            <center>
-            <label class="btn-text btn"># {{comments}}</label>
-            </center>
-          </div>
-        </span>
-      </div>
+     
     <div class="upper_container">
       <div class="backdrop">
         <div class="highlights"></div>
@@ -217,6 +209,7 @@ export default{
     skip(){
       console.log("skipfunction");
       this.load_sentence();
+
       //save and bring next sentence
     },
     next(){
@@ -247,7 +240,7 @@ export default{
 
       if((stringsInQuotes = patternTwo.exec(text)) || (stringsInQuotes =patternOne.exec(text)) || (stringsInQuotes =patternThree.exec(text))){
           this.quotesPresent = true;
-          this.quotesValue = stringsInQuotes;
+          this.quotesValue = stringsInQuotes.subString(1, stringsInQuotes.length-1)
           this.quotes_id = this.sentenceId + "_5";
       }
 
