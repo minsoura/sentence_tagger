@@ -31,7 +31,7 @@
         <div class="highlights"></div>
       </div>
       <div id="input">
-          <textarea autofocus id="mainTextArea" v-model="viewSentence" ref="mainText" placeholder="문장이 자동 입력됩니다." onkeypress="return false" v-on:keydown.r="next" v-on:keydown.enter="submit" v-on:keydown.a="get_who" v-on:keydown.s="get_when" v-on:keydown.d="get_where" v-on:keydown.f="get_what" v-on:keydown.g="get_how" v-on:keydown.space="erase" v-on:keydown.delete.prevent="" ></textarea>
+          <textarea autofocus id="mainTextArea" v-model="viewSentence" ref="mainText" placeholder="문장이 자동 입력됩니다." onkeypress="return false" v-on:keydown.r="next" v-on:keydown.enter="google_submit" v-on:keydown.a="get_who" v-on:keydown.s="get_when" v-on:keydown.d="get_where" v-on:keydown.f="get_what" v-on:keydown.g="get_how" v-on:keydown.space="erase" v-on:keydown.delete.prevent="" ></textarea>
       </div>
 
 
@@ -46,11 +46,14 @@
     <div class="control-box" style="marginTop:225px; float:right; ">
       <label class="prev_or_next" v-on:click="prev" v-if="false">이전</label>
       <label class="prev_or_next" v-on:click="next">다음</label>
-      <label class="prev_or_next" v-on:click="submit">제출하기</label>
+      <label class="prev_or_next" v-on:click="google_submit">제출하기</label>
     </div>
 
     <div class="container" style="margin-top:310px; width:100%">
       <div id="output" >
+        <div class="g_result">
+        </div>
+        <!--
         <div class="row">
           <label class="btn btn-primary btn-block btns" v-on:click="get_who" v-bind:style="{backgroundColor: buttonColors[0]}">누가 (a)</label>
           <textarea class="tarea" id="who_textarea" v-model="whoValue"></textarea>
@@ -105,7 +108,7 @@
         <label class="btn btn-primary btn-block btns" v-bind:style="{backgroundColor: '#BDBDBD'}">메모</label>
         <textarea class="tarea" id="memo_textarea" v-model="memoValue"></textarea>
         </div>
-
+      -->
       </div>
     </div>
   </div>
@@ -162,6 +165,7 @@ export default{
       currentWordsIndex:0, //현재 focus가 맞춰진 wordsSelected의 index
       quotesPresent:false,
       submitCounter:0,
+      googleResult:"",
     }
   },
   watch:{
@@ -228,6 +232,40 @@ export default{
       this.load_sentence();
       //save and bring next sentence
     },//
+    google_submit(){
+      var sentence = String(this.viewSentence);
+      var result = [];
+      var lineBreak = "<br>";
+      var boldLeft ="<b>";
+      var boldRight ="</b>";
+      this.$http.get('http://192.168.182.204:11112/proxy/google_nlp/', {params:{text_value:sentence}})
+                .then(response => {
+                    console.log(response.data);
+                    result = response.data;
+                    this.googleResult = "";
+                    result.forEach(entity => {
+                      this.googleResult += lineBreak;
+                      this.googleResult += boldLeft;
+                      this.googleResult += entity.name;
+                      this.googleReulst += boldRight;
+                      this.googleResult += lineBreak;
+                      this.googleResult +=` - Type: ${entity.type}, Salience: ${entity.salience}`;
+                      this.googleResult += lineBreak;
+
+                      console.log(entity.name);
+                      console.log(` - Type: ${entity.type}, Salience: ${entity.salience}`);
+                      if (entity.metadata && entity.metadata.wikipedia_url) {
+                        console.log(` - Wikipedia URL: ${entity.metadata.wikipedia_url}`);
+                        this.googleResult += ` - Wikipedia URL: ${entity.metadata.wikipedia_url}`;
+                        this.googleResult += lineBreak;
+                      }
+                    });
+                      $('.g_result').html(this.googleResult);
+                });
+        this.load_sentence();
+
+
+    },
     submit(){
       console.log("submit_function_called");
       this.submitCounter += 1; //우리 submitCounter로 바꿔요 ㅋㅋㅋㅋ prev next 때문에 애매하니깐 --> 넵 ㅋㅋㅋ
