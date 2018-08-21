@@ -35,7 +35,7 @@ const language = require('@google-cloud/language');
 const client = new language.LanguageServiceClient();
 // The text to analyze
 
-app.get('/proxy/google_nlp/', (req, res) => {
+app.get('/proxy/google_nlp_entity/', (req, res) => {
     var string = req.query.text_value;
     console.log("STRING: " + string);
     const document = {
@@ -62,6 +62,34 @@ app.get('/proxy/google_nlp/', (req, res) => {
     });
 
 });
+
+app.get('/proxy/google_nlp_syntax/', (req, res) => {
+    var string = req.query.text_value;
+    console.log("STRING: " + string);
+    const document = {
+      content: string,
+      type: 'PLAIN_TEXT',
+    };
+
+    client
+    .analyzeSyntax({document: document})
+       .then(results => {
+         const syntax = results[0];
+
+         console.log('Tokens:');
+         syntax.tokens.forEach(part => {
+           console.log(`${part.partOfSpeech.tag}: ${part.text.content}`);
+           console.log(`Morphology:`, part.partOfSpeech.proper);
+         });
+         res.send(syntax.tokens);
+       })
+       .catch(err => {
+         console.error('ERROR:', err);
+       });
+
+});
+
+
 
 
 
@@ -105,7 +133,7 @@ function tagging_document_queue(file_name) {
   return tagger_object;
 };
 
-var file_name = './test.txt';
+var file_name = './y0100-news-data.txt';
 var tag_reader = tagging_document_queue(file_name);
 
 

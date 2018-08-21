@@ -31,7 +31,7 @@
         <div class="highlights"></div>
       </div>
       <div id="input">
-          <textarea autofocus id="mainTextArea" v-model="viewSentence" ref="mainText" placeholder="문장이 자동 입력됩니다." onkeypress="return false" v-on:keydown.r="next" v-on:keydown.enter="google_submit" v-on:keydown.a="get_who" v-on:keydown.s="get_when" v-on:keydown.d="get_where" v-on:keydown.f="get_what" v-on:keydown.g="get_how" v-on:keydown.space="erase" v-on:keydown.delete.prevent="" ></textarea>
+          <textarea autofocus id="mainTextArea" v-model="viewSentence" ref="mainText" placeholder="문장이 자동 입력됩니다." onkeypress="return false" v-on:keydown.r="next" v-on:keydown.enter="load_sentence" v-on:keydown.a="get_who" v-on:keydown.s="get_when" v-on:keydown.d="get_where" v-on:keydown.f="get_what" v-on:keydown.g="get_how" v-on:keydown.space="erase" v-on:keydown.delete.prevent="" ></textarea>
       </div>
 
 
@@ -45,14 +45,19 @@
 
     <div class="control-box" style="marginTop:225px; float:right; ">
       <label class="prev_or_next" v-on:click="prev" v-if="false">이전</label>
-      <label class="prev_or_next" v-on:click="next">다음</label>
-      <label class="prev_or_next" v-on:click="google_submit">제출하기</label>
+      <!--<label class="prev_or_next" v-on:click="next">다음</label>-->
+      <label class="prev_or_next" v-on:click="load_sentence">제출하기</label>
     </div>
 
     <div class="container" style="margin-top:310px; width:100%">
       <div id="output" >
-        <div class="g_result">
+        <div class="row">
+          <div class="col-md-5 g_result">
+
+          </div>
+            <div class="col-md-7 g_result_summary" style="marginTop:20px;"></div>
         </div>
+
         <!--
         <div class="row">
           <label class="btn btn-primary btn-block btns" v-on:click="get_who" v-bind:style="{backgroundColor: buttonColors[0]}">누가 (a)</label>
@@ -165,7 +170,11 @@ export default{
       currentWordsIndex:0, //현재 focus가 맞춰진 wordsSelected의 index
       quotesPresent:false,
       submitCounter:0,
-      googleResult:"",
+      googleResultEnt:"",
+      googleResultSyn:"",
+      googleSummary:"",
+      textCutBySpaces:[''],
+      previousSubject:"",
     }
   },
   watch:{
@@ -230,41 +239,315 @@ export default{
       console.log("next_function");
       this.initialize_selection();
       this.load_sentence();
+
       //save and bring next sentence
     },//
-    google_submit(){
+    google_submit_entity(){
       var sentence = String(this.viewSentence);
       var result = [];
       var lineBreak = "<br>";
-      var boldLeft ="<b>";
-      var boldRight ="</b>";
-      this.$http.get('http://192.168.182.204:11112/proxy/google_nlp/', {params:{text_value:sentence}})
+      var boldLeft ='<div style="display:inline-block;border-radius:5px; padding:5px;color:white; font-weight:bold; background-color:';
+      var color="";
+      var boldLeftClose ='" >'
+      var color ="";
+      var boldRight ='</div>';
+      this.$http.get('http://192.168.182.195:11112/proxy/google_nlp_entity/', {params:{text_value:sentence}})
                 .then(response => {
-                    console.log(response.data);
                     result = response.data;
-                    this.googleResult = "";
+                    this.googleResultEnt = "";
                     result.forEach(entity => {
-                      this.googleResult += lineBreak;
-                      this.googleResult += boldLeft;
-                      this.googleResult += entity.name;
-                      this.googleReulst += boldRight;
-                      this.googleResult += lineBreak;
-                      this.googleResult +=` - Type: ${entity.type}, Salience: ${entity.salience}`;
-                      this.googleResult += lineBreak;
+                      this.googleResultEnt += lineBreak;
+                      this.googleResultEnt += boldLeft;
 
-                      console.log(entity.name);
-                      console.log(` - Type: ${entity.type}, Salience: ${entity.salience}`);
-                      if (entity.metadata && entity.metadata.wikipedia_url) {
-                        console.log(` - Wikipedia URL: ${entity.metadata.wikipedia_url}`);
-                        this.googleResult += ` - Wikipedia URL: ${entity.metadata.wikipedia_url}`;
-                        this.googleResult += lineBreak;
+                      if(entity.type =="PERSON"){
+                        color ="DodgerBlue";
+                      }else if(entity.type =="EVENT"){
+                        color ="Orange";
+                      }else if(entity.type =="LOCATION" || entity.type =="ORGANIZATION"){
+                        color ="MediumSeaGreen";
+                      }else if(entity.type =="OTHER"){
+                        color ="Gray";
+                      }else if(entity.type =="CONSUMER_GOOD"){
+                        color ="SlateBlue";
+                      }else if(entity.type =="WORK_OF_ART"){
+                        color ="Tomato";
                       }
+                      this.googleResultEnt += color;
+                      this.googleResultEnt += boldLeftClose;
+                      this.googleResultEnt +=` - ${entity.type} : ${entity.name}`;
+                      this.googleResultEnt += boldRight;
+                      this.googleResultEnt += lineBreak;
+
+
                     });
-                      $('.g_result').html(this.googleResult);
+                      $('.g_result').html(this.googleResultEnt);
                 });
-        this.load_sentence();
+    },
+    google_submit_syntax(){
+      var sentence = String(this.viewSentence);
+      var result = [];
+      var lineBreak = "<br>";
+      var boldLeft ='<div style="display:inline-block;border-radius:5px; padding:5px;color:white; font-weight:bold; background-color:';
+      var color="";
+      var boldLeftClose ='" >'
+      var color ="";
+      var boldRight ='</div>';
+      var advcl = [];
+      var advcl_words = [];
+      var advmod = [];
+      var advmod_words = [];
+      var rcmod = [];
+      var rcmod_words = [];
+      var nsubj = [];
+      var nsubj_words = [];
+      var subject_groups = [];
+      var subject_strings ="";
+      var main_subjects = [];
+      var text_groups = [];
+      var root = "";
+      var root_groups = [];
+      var clause_groups = [];
+      var quotationSwitch = false;
+      var result_objects = "";
+      var call_count = 0;
+      sentence = sentence.replace(/”/g,"'");
+      sentence = sentence.replace("  "," ");
+      sentence = sentence.replace(/“/g,"'");
+      sentence = sentence.replace("\"", "'");
+      sentence = sentence.replace("\"", "'");
+      this.viewSentence = String(sentence);
+      this.originalSentence = String(sentence);
+      this.words_highlights();
+      text_groups = sentence.split(" ");
+      this.textCutBySpaces = text_groups;
+      this.$http.get('http://192.168.182.195:11112/proxy/google_nlp_syntax/', {params:{text_value:sentence}})
+                .then(response => {
+                    result = response.data;
+                    result_objects = result;
+
+                    console.log("CALL COUNT: " + call_count++);
+                    this.googleResultSyn = "";
+                    this.googleSummary = "";
+                    for(var index =0; index<result.length; index++) {
+                      var part = result[index];
 
 
+                      // if(quotationSwitch){
+                        // continue;
+                      // }
+
+                      if(part.dependencyEdge.label =="ADVCL"){
+                        if(result[index+1].dependencyEdge.label=="PRT" || result[index+1].dependencyEdge.label=="SUFF"){
+                          advcl.push(index +1);
+                          advcl_words.push(result[index +1].text.content);
+                          console.log("CLAUSE:" + part.text.content + result[index+1].text.content);
+                        }else{
+                          advcl.push(index);
+                          advcl_words.push(part.text.content);
+                          console.log("CLAUSE:" + part.text.content);
+                        }
+                      }else if(part.dependencyEdge.label =="NSUBJ" || part.dependencyEdge.label =="NSUBJPASS"){
+                        nsubj.push(index);
+                        subject_strings = "";
+                        var pure_strings = "";
+                        if(index-2>0 && result[index-2].dependencyEdge.label =="POSS"){
+                          subject_strings = result[index-2].text.content;
+                          if(index-1>0 && result[index-1].dependencyEdge.label =="PRT"){
+                            subject_strings += result[index-1].text.content;
+                          }
+                        }
+
+
+                        subject_strings += this.noun_mergers(result_objects, index);
+                        pure_strings = part.text.content;
+
+                        if(index-2>0 && result[index-2].dependencyEdge.label =="CONJ"){
+                          subject_strings += result[index-2].text.content;
+                          if(index-1>0 && result[index-1].dependencyEdge.label =="PRT"){
+                            subject_strings += result[index-1].text.content;
+                          }
+                        }
+
+                        subject_strings += part.text.content;
+                        if(index +1 < result.length && result[index +1].dependencyEdge.label =="PRT"){
+                          subject_strings += result[index +1].text.content;
+                          pure_strings += result[index +1].text.content;
+                        }
+                        subject_groups.push(subject_strings);
+                        if(!quotationSwitch){
+                          main_subjects.push(subject_strings);
+                        }
+                        nsubj_words.push(part.text.content);
+                        console.log("SUBJECT:" + subject_strings);
+                      }else if(part.dependencyEdge.label =="ROOT"){
+                        root = "";
+                        if(index-3>0 && result[index-3].dependencyEdge.label =="DOBJ"){
+                          root = this.noun_mergers(result_objects, index-3);
+                          root += result[index-3].text.content;
+                          if(index-2>0 && result[index-2].dependencyEdge.label =="PRT"){
+                            root += result[index-2].text.content;
+                          }
+                        }
+
+                        if(index-4>0 && result[index-4].dependencyEdge.label =="DOBJ"){
+                          root = this.noun_mergers(result_objects, index-4);
+                          root += result[index-4].text.content;
+                          if(index-3>0 && result[index-3].dependencyEdge.label =="PRT"){
+                            root += result[index-3].text.content;
+                          }
+                        }
+                        if(index-1>0 && result[index-1].dependencyEdge.label =="AUX" || index-1>0 && result[index-1].dependencyEdge.label =="ATTR"){
+                          root += this.noun_mergers(result_objects, index-1);
+                          if(index-2>0 && result[index-2].dependencyEdge.label =="RCMOD"){
+                            root += result[index-2].text.content;
+                          }
+                          root += result[index-1].text.content;
+
+                        }
+
+
+                        if(index-2>0 && result[index-2].dependencyEdge.label =="AUX"){
+                          root += result[index-2].text.content;
+                          if(index-1>0 && result[index-1].dependencyEdge.label =="SUFF" || index-1>0 && result[index-1].dependencyEdge.label =="PRT"){
+                            root += result[index-1].text.content;
+                          }
+                        }
+
+                        if(index-2>0 && result[index-2].dependencyEdge.label =="ADVMOD"){
+                          root += this.noun_mergers(result_objects, index-2);
+                          root += result[index-2].text.content;
+                          if(index-1>0 && result[index-1].dependencyEdge.label =="PRT" ){
+                            root += result[index-1].text.content;
+                          }
+                        }
+
+                        if(index-2>0 && result[index-2].dependencyEdge.label =="DOBJ"){
+                          root = this.noun_mergers(result_objects, index-2);
+                          root += result[index-2].text.content;
+                          if(index-1>0 && result[index-1].dependencyEdge.label =="PRT"){
+                            root += result[index-1].text.content;
+                          }
+                        }
+
+                        root += part.text.content;
+                        if(index+1< result.length && result[index+1].dependencyEdge.label =="SUFF" || index+1< result.length && result[index+1].dependencyEdge.label =="PRT"){
+                          root += result[index+1].text.content;
+                        }
+                        console.log("ROOT:" + root);
+                        if(index-1>0 && result[index-1].dependencyEdge.label =="ADVCL" ){
+                          root = part.text.content;
+                        }
+                        root_groups.push(root);
+                      }else if(part.dependencyEdge.label =="RCMOD"){
+                        rcmod.push(index);
+                        var rcmod_text = part.text.content;
+                        if(index+1< result.length && result[index+1].dependencyEdge.label =="SUFF"){
+                          rcmod_text +=" " + part.text.content;
+                        }
+                        rcmod_words.push(rcmod_text);
+                      }
+                      if(part.text.content =="'" || part.text.content =="\"" || part.text.content =="“" || part.text.content =="”"){
+                        if(quotationSwitch ==false){
+                          quotationSwitch = true;
+                        }else{
+                          quotationSwitch = false;
+                      }
+                    }
+                      this.googleResultSyn += lineBreak;
+                      this.googleResultSyn +=`${part.partOfSpeech.tag}: ${part.text.content}`;
+                      this.googleResultSyn += lineBreak;
+                      this.googleResultSyn += `${part.dependencyEdge.label}`;
+                      this.googleResultSyn += lineBreak;
+
+                    };
+
+                      console.log(this.googleResultSyn);
+                      console.log("Subject Count:" + subject_groups.length);
+                      console.log("Clause Count:" + advcl_words.length);
+                      console.log("Relation MOD COUNT: " + rcmod_words.length);
+                      for(var i=0; i<advcl_words.length; i++){
+                        if(i==0){
+                          if(nsubj.length>=1 && nsubj[0] < advcl[0]){
+                            // console.log("Caluse: " + this.sentence_merger(sentence, subject_groups[0], advcl_words[0]), "subject present");
+                            clause_groups.push(this.sentence_merger(sentence, subject_groups[0], advcl_words[0]));
+                          }else{
+                            // console.log("Caluse: " + this.sentence_merger(sentence, "none", advcl_words[0]),"subject absent");
+                            clause_groups.push(this.sentence_merger(sentence, "none", advcl_words[0]));
+                          }
+                        }else{
+                          // console.log("Caluse: " +"Start_WORDS:" +advcl_words[i-1] + "end_words:" + advcl_words[i] + this.sentence_merger(sentence, advcl_words[i-1], advcl_words[i]), "subject absent");
+                            clause_groups.push(this.sentence_merger(sentence, advcl_words[i-1], advcl_words[i]));
+                        }
+                      }
+
+                      for(var i=0; i<rcmod_words.length; i++){
+                        if(nsubj.length>1 && nsubj[i] < rcmod_words[0]){
+                          console.log("RCMOD: " + this.sentence_merger(sentence, subject_groups[1], rcmod_words[0]), "subject present");
+                        }
+                      }
+                      this.googleSummary += '<div class="row">';
+                      this.googleSummary += '<div style="border-radius:5px; padding:5px;color:white; font-weight:bold; background-color:#2C3539; text-align:center">주어</div>'
+                      this.googleSummary += '<div class="row">';
+                      this.googleSummary += this.print_elements("주어", subject_groups);
+                      this.googleSummary += '</div>';
+
+                      this.googleSummary += '<div style="margin-top:30px;border-radius:5px; padding:5px;color:white; font-weight:bold; background-color:#2C3539;text-align:center">주요 동사</div>'
+                      this.googleSummary += '<div class="row">';
+                      this.googleSummary += this.print_elements("메인동사", root_groups);
+                      this.googleSummary += '</div>';
+
+                      this.googleSummary += '</div>'
+                      // this.googleSummary += this.print_elements("절", clause_groups);
+                      console.log(this.print_elements("절", clause_groups));
+                      // this.googleSummary += lineBreak;
+                      $('.g_result_summary').html(this.googleSummary);
+                });
+    },
+    print_elements(name, arrayGroups){
+      var print_groups = "[";
+      for(var i=0; i<arrayGroups.length; i++){
+        print_groups += arrayGroups[i] + ",";
+      }
+      print_groups += "]";
+      //console.log(print_groups);
+      return print_groups;
+    },
+    get_whole_word(partial_word){
+      var whole_word = "";
+      for(var i=0; i<this.textCutBySpaces.length; i++){
+        if(this.textCutBySpaces[i].includes(partial_word)){
+          whole_word = this.textCutBySpaces[i];
+          break;
+        }
+      }
+      console.log("Word FOUND:" + whole_word);
+      return whole_word;
+    },
+    sentence_merger(original_sentence, start_word, end_word){
+      var sentence ="";
+      var startIndex;
+      console.log("sentence merger activated");
+      //var correctWord = this.get_whole_word(start_word);
+      //startIndex = original_sentence.indexOf(correctWord) + correctWord.length;
+      startIndex = original_sentence.indexOf(start_word) + start_word.length;
+
+      var endIndex = original_sentence.indexOf(end_word) + end_word.length;
+      var sentence = original_sentence.substring(startIndex, endIndex);
+      sentence = sentence.replace("'", "");
+      return sentence;
+    },
+    noun_mergers(objects, index){
+      console.log("noun merger activated");
+      index --;
+      var merged_noun ="";
+      for(var i=index; i>=0; i--){
+        if(objects[i].dependencyEdge.label =="NN"){
+          merged_noun = objects[i].text.content + " " + merged_noun;
+        }else{
+          break;
+        }
+      }
+      return merged_noun;
     },
     submit(){
       console.log("submit_function_called");
@@ -341,21 +624,30 @@ export default{
       console.log("words_selected" + this.wordsSelected[number]);
     },
     load_sentence(){
-      this.$http.get('http://192.168.182.195:51112/proxy/tag_read/')
+      this.$http.get('http://192.168.182.195:11112/proxy/tag_read/')
                 .then(response => {
                 var raw_string = response.data;
                 console.log(raw_string); // ex: {"sentence_text":"창조관은 대학의 중심에 위치해 방송문화예술대학 실습실 및 강의실로 이용할 예정이다.","sentence_id":"5-13"}
+                var sentence ="";
                 this.sentenceId = raw_string.sentence_id;
                 this.previousSentence = String(this.originalSentence);
-                this.originalSentence = String(raw_string.sentence);
-                this.viewSentence = String(raw_string.sentence);
+                sentence = String(raw_string.sentence_text);
+                sentence = sentence.replace(/”/g,"'");
+                sentence = sentence.replace("  "," ");
+                sentence = sentence.replace(/“/g,"'");
+                sentence = sentence.replace("\"", "'");
+                sentence = sentence.replace("\"", "'");
+                this.viewSentence = String(sentence);
+                this.originalSentence = String(sentence);
                 this.words_highlights();
                 this.find_quotes();
+                this.google_submit_entity();
+                this.google_submit_syntax();
       });
 
     },
     load_values_by_id(){ // prev function에서 발생된다면 sentenceId 가 먼저 prevSentenceId값으로 변환이 되어야함.
-      this.$http.get('http://192.168.182.195:51112/proxy/tag_read_by_id/', {params:{sentence_id:this.sentenceId}})
+      this.$http.get('http://192.168.182.195:11112/proxy/tag_read_by_id/', {params:{sentence_id:this.sentenceId}})
                 .then(response => {
                 var raw_string = response.data;
                 console.log(raw_string); // ex: {"sentence_text":"창조관은 대학의 중심에 위치해 방송문화예술대학 실습실 및 강의실로 이용할 예정이다.","sentence_id":"5-13"}
@@ -367,7 +659,7 @@ export default{
     },
     save_tag(){
       var save_data = JSON.stringify(this.get_save_data());
-      this.$http.get('http://192.168.182.195:51112/proxy/tag_save/', {params:{save_data:save_data}})
+      this.$http.get('http://192.168.182.195:11112/proxy/tag_save/', {params:{save_data:save_data}})
                 .then(response => {console.log(response.data)});
     },
     get_focus(focus){
@@ -612,7 +904,14 @@ export default{
   margin: auto;
 }
 
+.google{
+  background-color: blue;
+}
 
+.g_result_syn{
+    font-family: 'Nanum Gothic', sans-serif;
+    color:yellow;
+}
 #output {
   margin-left:20px;
   margin-right:20px;
@@ -740,7 +1039,6 @@ align-self:center;
 mark {
   border-radius: 3px;
   color: transparent;
-  background-color: #b1d5e5;
 }
 
 
