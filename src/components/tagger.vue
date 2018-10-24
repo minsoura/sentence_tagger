@@ -1,6 +1,7 @@
 <template>
+
 <div>
-  <div class="modal fade" id="warningDialog" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+  <!-- <div class="modal fade" id="warningDialog" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered" role="document">
     <div class="modal-content">
       <div class="modal-header">
@@ -45,7 +46,7 @@
 
     <div class="control-box" style="marginTop:225px; float:right; ">
       <label class="prev_or_next" v-on:click="prev" v-if="false">이전</label>
-      <!--<label class="prev_or_next" v-on:click="next">다음</label>-->
+      <label class="prev_or_next" v-on:click="next">다음</label>
       <label class="prev_or_next" v-on:click="load_sentence">제출하기</label>
     </div>
 
@@ -56,7 +57,7 @@
 
           </div>
             <div class="col-md-7 g_result_summary" style="marginTop:20px;"></div>
-        </div>
+        </div> -->
 
         <!--
         <div class="row">
@@ -114,9 +115,13 @@
         <textarea class="tarea" id="memo_textarea" v-model="memoValue"></textarea>
         </div>
       -->
-      </div>
+
+
+
+
+      <!-- </div>
     </div>
-  </div>
+  </div> -->
   </div>
 </template>
 <script>
