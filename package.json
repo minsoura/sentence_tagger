@@ -22,7 +22,7 @@
     "highlight-within-textarea": "^2.0.5",
     "jquery": "^3.3.1",
     "moment": "^2.22.2",
-    "mongoose": "^5.3.4",
+    "mongoose": "^5.7.5",
     "request": "^2.88.0",
     "stemmer": "^1.0.3",
     "synonyms": "^1.0.1",
