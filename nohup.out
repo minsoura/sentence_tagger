@@ -1,0 +1,14 @@
+Server Running at localhost:11117
+SERVER_INPUT: 때리다
+(node:2934) DeprecationWarning: current URL string parser is deprecated, and will be removed in a future version. To use the new parser, pass option { useNewUrlParser: true } to MongoClient.connect.
+[{"_id":"5bc98bb43ceb5229c8b62dae","eng":"trim","kor":"때리다"},{"_id":"5bc98bb43ceb5229c8b62daf","eng":"walk","kor":"때리다"},{"_id":"5bc98bc23ceb5229c8b6aba2","eng":"belt, clock, clout, strike, thrash","kor":"때리다"}] previously saved values detected
+SERVER_INPUT: 맞다
+[{"_id":"5bc98bb43ceb5229c8b62e2c","eng":"catch","kor":"맞다"},{"_id":"5bc98bb43ceb5229c8b62e2d","eng":"sit","kor":"맞다"},{"_id":"5bc98bc43ceb5229c8b6b941","eng":"receive,welcome (note, usually this is 맞히다)","kor":"맞다"},{"_id":"5bc98bc43ceb5229c8b6b942","eng":"Be struck,beaten","kor":"맞다"},{"_id":"5bc98bc43ceb5229c8b6b943","eng":"Be right, correct; to match, be fitting for","kor":"맞다"},{"_id":"5bc98bc43ceb5229c8b6b944","eng":"to be across the street from","kor":"맞다"}] previously saved values detected
+SERVER_INPUT: 상승하다
+[{"_id":"5bc98bcc3ceb5229c8b6feed","eng":"to climb higher, to rise (a thermometer's temperature)","kor":"상승하다"}] previously saved values detected
+SERVER_INPUT: 오르다
+[{"_id":"5bc98bd43ceb5229c8b74b83","eng":"Go up, climb, ascend","kor":"오르다"}] previously saved values detected
+SERVER_INPUT: 상승하다
+[{"_id":"5bc98bcc3ceb5229c8b6feed","eng":"to climb higher, to rise (a thermometer's temperature)","kor":"상승하다"}] previously saved values detected
+SERVER_INPUT: 오르다
+[{"_id":"5bc98bd43ceb5229c8b74b83","eng":"Go up, climb, ascend","kor":"오르다"}] previously saved values detected

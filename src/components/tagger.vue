@@ -1,7 +1,7 @@
 <template>
 
 <div>
-  <!-- <div class="modal fade" id="warningDialog" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+  <div class="modal fade" id="warningDialog" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered" role="document">
     <div class="modal-content">
       <div class="modal-header">
@@ -57,9 +57,9 @@
 
           </div>
             <div class="col-md-7 g_result_summary" style="marginTop:20px;"></div>
-        </div> -->
+        </div>
 
-        <!--
+<!--
         <div class="row">
           <label class="btn btn-primary btn-block btns" v-on:click="get_who" v-bind:style="{backgroundColor: buttonColors[0]}">누가 (a)</label>
           <textarea class="tarea" id="who_textarea" v-model="whoValue"></textarea>
@@ -113,15 +113,10 @@
         <div class="row">
         <label class="btn btn-primary btn-block btns" v-bind:style="{backgroundColor: '#BDBDBD'}">메모</label>
         <textarea class="tarea" id="memo_textarea" v-model="memoValue"></textarea>
-        </div>
-      -->
-
-
-
-
-      <!-- </div>
+        </div> -->
+      </div>
     </div>
-  </div> -->
+  </div>
   </div>
 </template>
 <script>
@@ -778,7 +773,7 @@ export default{
       return save_data;
     },
     initialize_selection() {
-      this.uncheck_all_boxes(); // reset checkbox
+     // this.uncheck_all_boxes(); // reset checkbox
       this.quotesId="";
       //console.log('q1'+this.quotesId);
       this.searchTerm='';
@@ -1052,3 +1047,4 @@ mark {
 
 
 </style>
+

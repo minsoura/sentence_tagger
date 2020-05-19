@@ -200,7 +200,7 @@ export default{
       var resultGroups1 = [] ;
       var resultGroups2 = [] ;
       console.log("==============Process 1(한영 번역 시작)==============");
-      this.$http.get('http://localhost:11112/proxy/eng_words/', {params:{words:kor_word1}})
+      this.$http.get('http://192.168.182.195:11117/proxy/eng_words/', {params:{words:kor_word1}})
                 .then(response => {
                     var result1 = response.data;
                     if(result1!="no data"){
@@ -222,7 +222,7 @@ export default{
                     }else{
                       this.transWordView1 = "none found";
                     }
-                    this.$http.get('http://localhost:11112/proxy/eng_words/', {params:{words:kor_word2}})
+                    this.$http.get('http://192.168.182.195:11117/proxy/eng_words/', {params:{words:kor_word2}})
                               .then(response =>{
                                   var result2 = response.data;
                                   if(result2!="no data"){
@@ -279,7 +279,7 @@ export default{
                                             }else{
                                             }
                                           }else{
-                                            console.log("동의어임");
+                                            console.log(":동의어임");
                                           }
                                         }else{
                                           console.log("비교 불가");
